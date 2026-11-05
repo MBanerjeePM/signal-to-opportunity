@@ -1,0 +1,16 @@
+SYNTHETIC HACKATHON TEST DATA. This is fictional text written for development testing only. It is NOT Hyland product documentation and does not describe any real product.
+
+=== PDF Page 42 | Section: PDF Viewer ===
+Users can rotate PDF pages clockwise or counterclockwise from the page toolbar. Rotation can be applied to a single page or to all pages. After rotating, users can save the rotated document, which replaces the current view of the document.
+
+=== PDF Page 57 | Section: Page Management ===
+Users can extract a single page from a PDF by selecting the page thumbnail and choosing Extract Page. The extracted page opens as a new document.
+
+=== PDF Page 63 | Section: Search ===
+Users can search the text of the open document by entering a word or phrase in the search box at the top of the viewer. Matches are highlighted in the page and listed in the search panel. Users can move between matches with the Next and Previous buttons.
+
+=== PDF Page 88 | Section: Workflow ===
+Users can move a document to the next step of its workflow by selecting Next Step in the task panel. The task panel lists the steps of the workflow and shows the current step.
+
+=== PDF Page 91 | Section: Annotations ===
+Users can add highlights and text comments to a document using the annotation toolbar. Annotations are saved with the document and are visible to other users who open it. Users can edit or delete their own annotations.

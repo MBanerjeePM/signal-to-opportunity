@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Signal → Opportunity</title>
+  <style>
+    :root {
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --text: #1b2437;
+      --muted: #6b7690;
+      --border: #e2e7f1;
+      --accent: #4f46e5;
+      --accent-2: #7c3aed;
+      --accent-soft: #eef0ff;
+      --mrg: #0f766e;
+      --mrg-soft: #e6f6f4;
+      --amber: #b45309;
+      --amber-soft: #fff7e6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      padding: 40px 24px 56px;
+      text-align: center;
+    }
+    header h1 { margin: 0 0 8px; font-size: 2.2rem; letter-spacing: -0.5px; }
+    header p  { margin: 0; font-size: 1.05rem; opacity: 0.9; }
+    main {
+      max-width: 960px;
+      margin: -32px auto 48px;
+      padding: 0 24px;
+      display: grid;
+      gap: 24px;
+    }
+    .banner {
+      background: #fff4e0;
+      color: #7a4a00;
+      border: 1px solid #f3d9a4;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      box-shadow: 0 4px 16px rgba(30, 41, 80, 0.06);
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 4px 16px rgba(30, 41, 80, 0.06);
+    }
+    .card h2 { margin: 0 0 4px; font-size: 1.15rem; }
+    .card .hint { margin: 0 0 16px; color: var(--muted); font-size: 0.9rem; }
+    .dropzone {
+      display: block;
+      border: 2px dashed #c3c9e0;
+      border-radius: 12px;
+      padding: 32px 16px;
+      text-align: center;
+      color: var(--muted);
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .dropzone:hover, .dropzone.drag { border-color: var(--accent); background: var(--accent-soft); }
+    .dropzone strong { color: var(--accent); }
+    .dropzone input { display: none; }
+    .uploads { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+    .upload h3 { margin: 0 0 4px; font-size: 1rem; }
+    .upload .hint { margin-bottom: 12px; }
+    .fileName { margin-top: 10px; font-weight: 600; color: var(--text); word-break: break-word; }
+    .actions { display: flex; align-items: center; gap: 16px; margin-top: 20px; flex-wrap: wrap; }
+    button {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { filter: brightness(1.08); }
+    button:disabled { opacity: 0.6; cursor: progress; }
+    #status { color: var(--muted); font-size: 0.92rem; }
+    [hidden] { display: none !important; }
+    .tag {
+      font-size: 0.7rem; font-weight: 600; vertical-align: middle; margin-left: 8px;
+      padding: 2px 8px; border-radius: 999px; background: #fff4e0; color: #9a5b00;
+    }
+    .tablewrap { overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    th { background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
+    #status.error { color: #b42318; }
+    .empty {
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      padding: 28px 16px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.92rem;
+      background: #fafbfe;
+    }
+
+    /* Emerging opportunities */
+    .themes { display: grid; gap: 10px; }
+    .theme-item {
+      display: block; width: 100%; text-align: left;
+      background: #fff; color: var(--text);
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px 16px; font-weight: 400;
+    }
+    .theme-item:hover { border-color: var(--accent); filter: none; }
+    .theme-item.selected { border-color: var(--accent); background: var(--accent-soft); }
+    .theme-item .name { font-weight: 600; font-size: 1rem; }
+    .theme-item .meta { margin-top: 4px; font-size: 0.85rem; color: var(--muted); }
+
+    /* Detail panels */
+    .panel { border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-top: 16px; }
+    .panel.mrg { border-left: 5px solid var(--mrg); background: var(--mrg-soft); }
+    .panel.signals { border-left: 5px solid var(--accent); }
+    .panel h3 { margin: 0 0 4px; font-size: 1.05rem; }
+    .panel .source { margin: 0 0 12px; font-size: 0.82rem; color: var(--muted); }
+    .panel h4 { margin: 16px 0 6px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    .panel p { margin: 0 0 6px; line-height: 1.45; }
+    .panel ul { margin: 0; padding-left: 20px; }
+    .panel li { margin-bottom: 6px; line-height: 1.45; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+    .chip { font-size: 0.78rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+    .badge { display: inline-block; font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: #e8ebf3; color: var(--text); }
+    .badge.Supported { background: #dcf5e4; color: #146c2e; }
+    .badge.Partially { background: #fff1cc; color: #8a5a00; }
+    .badge.NotFound, .badge.Unclear { background: #e8ebf3; color: #3d4760; }
+    .unval { font-size: 0.68rem; font-weight: 700; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: #fdeaea; color: #b42318; vertical-align: middle; }
+    blockquote { margin: 6px 0; padding: 8px 12px; background: #fff; border-left: 3px solid var(--mrg); border-radius: 4px; }
+    blockquote .ref { display: block; margin-top: 4px; font-size: 0.82rem; color: var(--muted); }
+    .kv { display: grid; grid-template-columns: 150px 1fr; gap: 4px 12px; margin-bottom: 6px; }
+    .kv .k { color: var(--muted); font-size: 0.85rem; }
+    @media (max-width: 560px) { .kv { grid-template-columns: 1fr; } }
+
+    /* Internal Discovery Review (internal expert evidence: amber, apart from customer and product evidence) */
+    .panel.internal { border-left: 5px solid var(--amber); background: var(--amber-soft); }
+    .btn-amber { background: linear-gradient(135deg, #d97706, #b45309); }
+    .ie-form label { display: block; margin: 12px 0 4px; font-size: 0.85rem; font-weight: 600; }
+    .ie-form select, .ie-form textarea, .ie-form input {
+      width: 100%; padding: 8px 10px; border: 1px solid #ecd2a0; border-radius: 8px;
+      font: inherit; background: #fff; color: var(--text);
+    }
+    .ie-msg { font-size: 0.9rem; color: var(--muted); }
+    .ie-msg.error { color: #b42318; }
+    .ie-item, .ie-result .ie-card {
+      background: #fff; border: 1px solid #f3d9a4; border-radius: 8px; padding: 10px 12px; margin-top: 8px;
+    }
+    .ie-item p, .ie-card p { margin: 6px 0; }
+    .chip.ie { background: #ffe8c2; color: var(--amber); }
+    .basis { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 4px; font-size: 0.8rem; color: var(--muted); }
+    .badge.imp { background: #ffe8c2; color: #7a4a00; margin-left: 8px; }
+    .badge.aud-Customer { background: var(--accent-soft); color: var(--accent); }
+    .badge.aud-Internal { background: #ffe8c2; color: #7a4a00; }
+    .unver { font-size: 0.7rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: #ffe8c2; color: #7a4a00; }
+    .footnote { margin-top: 18px; font-size: 0.85rem; font-style: italic; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Signal → Opportunity</h1>
+    <p>AI-powered Product Discovery Intelligence</p>
+  </header>
+
+  <main>
+    <div class="banner" role="note">Prototype mode: Capability validation uses synthetic SampleMRG.txt, not the uploaded PDF.</div>
+
+    <section class="card">
+      <h2>Upload Files</h2>
+      <p class="hint">Choose your customer signals and the product documentation.</p>
+      <div class="uploads">
+        <div class="upload">
+          <h3>Upload Customer Signals</h3>
+          <p class="hint">Excel file (.xlsx) of customer signals.</p>
+          <label class="dropzone" id="dropzone">
+            <input type="file" id="fileInput" accept=".xlsx">
+            <div><strong>Click to choose a file</strong> or drag it here</div>
+            <div class="fileName" id="fileName"></div>
+          </label>
+        </div>
+        <div class="upload">
+          <h3>Upload Product MRG</h3>
+          <p class="hint">Product documentation PDF (.pdf), such as a Web Client MRG. Not read yet in this prototype.</p>
+          <label class="dropzone" id="mrgDropzone">
+            <input type="file" id="mrgInput" accept=".pdf">
+            <div><strong>Click to choose a file</strong> or drag it here</div>
+            <div class="fileName" id="mrgFileName"></div>
+          </label>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" id="analyzeBtn">Analyze Signals</button>
+        <span id="status"></span>
+      </div>
+    </section>
+
+    <section class="card" id="receivedCard" hidden>
+      <h2>Received Signals <span class="tag">temporary check</span></h2>
+      <p class="hint" id="receivedSummary"></p>
+      <div class="tablewrap"><table id="receivedTable"></table></div>
+    </section>
+
+    <section class="card">
+      <h2>Emerging Opportunities</h2>
+      <p class="hint">Themes found in your signals will appear here. Select one to see its brief.</p>
+      <div class="empty" id="themesEmpty">No themes yet.</div>
+      <div class="themes" id="themesList" hidden></div>
+    </section>
+
+    <section class="card">
+      <h2>Discovery Brief</h2>
+      <p class="hint">The capability check and brief for the selected theme will appear here.</p>
+      <div class="empty" id="detailEmpty">No theme selected.</div>
+      <div id="detailBody" hidden></div>
+    </section>
+  </main>
+
+  <script>
+    const input = document.getElementById('fileInput');
+    const mrgInput = document.getElementById('mrgInput');
+    const status = document.getElementById('status');
+
+    // Wires one dropzone: shows the chosen file's name and accepts only the given extension.
+    // Files are only selected here; the product MRG is not read or sent anywhere yet.
+    function setupDropzone(zoneId, inputEl, nameId, extension, label) {
+      const zone = document.getElementById(zoneId);
+      const nameEl = document.getElementById(nameId);
+
+      function showFile(file) {
+        if (file && !file.name.toLowerCase().endsWith(extension)) {
+          inputEl.value = '';
+          nameEl.textContent = '';
+          setStatus(`Please choose a ${extension} file for ${label}.`, true);
+          return;
+        }
+        nameEl.textContent = file ? file.name : '';
+        setStatus('');
+      }
+
+      inputEl.addEventListener('change', () => showFile(inputEl.files[0]));
+
+      ['dragenter', 'dragover'].forEach(ev =>
+        zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.add('drag'); }));
+      ['dragleave', 'drop'].forEach(ev =>
+        zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.remove('drag'); }));
+      zone.addEventListener('drop', e => {
+        if (e.dataTransfer.files.length) {
+          inputEl.files = e.dataTransfer.files;
+          showFile(inputEl.files[0]);
+        }
+      });
+    }
+
+    setupDropzone('dropzone', input, 'fileName', '.xlsx', 'Customer Signals');
+    setupDropzone('mrgDropzone', mrgInput, 'mrgFileName', '.pdf', 'Product MRG');
+
+    const receivedCard = document.getElementById('receivedCard');
+    const receivedSummary = document.getElementById('receivedSummary');
+    const receivedTable = document.getElementById('receivedTable');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const themesEmpty = document.getElementById('themesEmpty');
+    const themesList = document.getElementById('themesList');
+    const detailEmpty = document.getElementById('detailEmpty');
+    const detailBody = document.getElementById('detailBody');
+
+    function setStatus(text, isError) {
+      status.textContent = text;
+      status.classList.toggle('error', !!isError);
+    }
+
+    // All text goes through textContent, so nothing from the server or AI is read as HTML.
+    function el(tag, cls, text) {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text !== undefined) e.textContent = text;
+      return e;
+    }
+    function chips(ids) {
+      const wrap = el('div', 'chips');
+      (ids || []).forEach(id => wrap.appendChild(el('span', 'chip', id)));
+      return wrap;
+    }
+    function unvalidatedTag() { return el('span', 'unval', 'UNVALIDATED'); }
+    function heading(text) { return el('h4', null, text); }
+    function bulletList(items, build) {
+      const ul = el('ul');
+      items.forEach(item => { const li = el('li'); build(li, item); ul.appendChild(li); });
+      return ul;
+    }
+    function kv(parent, key, value) {
+      const row = el('div', 'kv');
+      row.appendChild(el('div', 'k', key));
+      const v = el('div');
+      if (value instanceof Node) v.appendChild(value); else v.textContent = value;
+      row.appendChild(v);
+      parent.appendChild(row);
+    }
+    function badgeClass(assessment) {
+      return assessment === 'Partially Supported' ? 'Partially' : assessment.replace(/\s+/g, '');
+    }
+
+    // Internal review state lives in this browser session only. A new analysis clears it.
+    let currentResults = [];
+    let feedbackItems = [];          // { id, themeIndex, reviewerRole, text, reference }
+    let nextIeNumber = 1;
+    const reviewResults = new Map(); // themeIndex -> validated review
+
+    function clearResults() {
+      currentResults = [];
+      feedbackItems = [];
+      nextIeNumber = 1;
+      reviewResults.clear();
+      receivedCard.hidden = true;
+      themesList.replaceChildren();
+      themesList.hidden = true;
+      themesEmpty.hidden = false;
+      detailBody.replaceChildren();
+      detailBody.hidden = true;
+      detailEmpty.hidden = false;
+    }
+
+    function renderReceived(data) {
+      receivedTable.replaceChildren();
+      const head = receivedTable.createTHead().insertRow();
+      data.columns.forEach(name => {
+        const th = document.createElement('th');
+        th.textContent = name;
+        head.appendChild(th);
+      });
+      const body = receivedTable.createTBody();
+      data.rows.forEach(row => {
+        const tr = body.insertRow();
+        row.forEach(value => { tr.insertCell().textContent = value; });
+      });
+      receivedSummary.textContent =
+        `${data.fileName}: ${data.rowCount} signal(s), ${data.columns.length} column(s).`;
+      receivedCard.hidden = false;
+    }
+
+    function renderThemes(results) {
+      currentResults = results;
+      themesList.replaceChildren();
+      results.forEach((r, i) => {
+        const btn = el('button', 'theme-item');
+        btn.type = 'button';
+        btn.appendChild(el('div', 'name', r.theme));
+        btn.appendChild(el('div', 'meta',
+          `Signals: ${r.discovery.supportingSignalIds.join(', ')}  ·  MRG check: ${r.capability.assessment}`));
+        btn.addEventListener('click', () => {
+          themesList.querySelectorAll('.theme-item').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          renderDetail(i);
+        });
+        themesList.appendChild(btn);
+      });
+      themesEmpty.hidden = true;
+      themesList.hidden = false;
+    }
+
+    function renderDetail(index) {
+      const r = currentResults[index];
+      detailBody.replaceChildren(
+        renderCapability(r.capability), renderBrief(r.discovery), renderInternalPanel(index));
+      detailEmpty.hidden = true;
+      detailBody.hidden = false;
+    }
+
+    // MRG evidence panel (product documentation only; kept apart from customer-signal evidence).
+    function renderCapability(c) {
+      const p = el('div', 'panel mrg');
+      p.appendChild(el('h3', null, 'Capability Validation'));
+      p.appendChild(el('p', 'source', 'Evidence source: synthetic SampleMRG.txt (not Hyland documentation). Not Found means not located in this documentation, never "unsupported".'));
+      kv(p, 'Requested capability', c.requestedCapability);
+      const a = el('span', `badge ${badgeClass(c.assessment)}`, c.assessment);
+      kv(p, 'Assessment', a);
+      kv(p, 'Evidence strength', `${c.evidenceStrength}: ${c.evidenceStrengthReason}`);
+      const interp = el('div');
+      interp.appendChild(document.createTextNode(c.pmInterpretation));
+      interp.appendChild(unvalidatedTag());
+      kv(p, 'PM interpretation', interp);
+      p.appendChild(heading('MRG evidence'));
+      if (!c.mrgEvidence.length) {
+        p.appendChild(el('p', null, 'No supporting text located in the provided documentation.'));
+      }
+      c.mrgEvidence.forEach(ev => {
+        const q = el('blockquote', null, `"${ev.exactEvidenceText}"`);
+        q.appendChild(el('span', 'ref', `${ev.pageOrSection}  ·  ${ev.directness}`));
+        p.appendChild(q);
+      });
+      p.appendChild(heading('Explanation'));
+      p.appendChild(el('p', null, c.explanation));
+      return p;
+    }
+
+    // Discovery Brief panel (customer-signal evidence, with unvalidated conclusions labelled).
+    function renderBrief(d) {
+      const p = el('div', 'panel signals');
+      p.appendChild(el('h3', null, 'Discovery Brief: ' + d.theme));
+      p.appendChild(el('p', 'source', 'Evidence source: uploaded customer signals. Inferences, hypotheses and unknowns are unvalidated.'));
+      p.appendChild(el('p', null, d.themeRationale));
+      p.appendChild(heading('Supporting Signal IDs'));
+      p.appendChild(chips(d.supportingSignalIds));
+
+      p.appendChild(heading('Facts'));
+      p.appendChild(bulletList(d.facts, (li, f) => {
+        li.appendChild(document.createTextNode(f.statement + ' '));
+        li.appendChild(chips(f.supportingSignalIds));
+      }));
+
+      p.appendChild(heading('Inferences'));
+      if (!d.inferences.length) p.appendChild(el('p', null, 'None.'));
+      else p.appendChild(bulletList(d.inferences, (li, f) => {
+        li.appendChild(document.createTextNode(f.statement));
+        li.appendChild(unvalidatedTag());
+        li.appendChild(el('div', null, 'Relies on: ' + f.reliesOn));
+        li.appendChild(chips(f.supportingSignalIds));
+      }));
+
+      p.appendChild(heading('Counter-evidence and alternative explanations'));
+      if (!d.counterEvidence.length) p.appendChild(el('p', null, 'None found in the input (this does not confirm the opportunity).'));
+      else p.appendChild(bulletList(d.counterEvidence, (li, f) => {
+        li.appendChild(el('strong', null, f.type + ': '));
+        li.appendChild(document.createTextNode(f.statement + ' '));
+        li.appendChild(chips(f.supportingSignalIds));
+      }));
+
+      p.appendChild(heading('Opportunity hypothesis'));
+      ['who', 'what', 'why'].forEach(k => {
+        const part = d.opportunityHypothesis[k];
+        const v = el('div');
+        v.appendChild(document.createTextNode(part.text));
+        if (part.unvalidated) v.appendChild(unvalidatedTag());
+        if (part.supportingSignalIds.length) v.appendChild(chips(part.supportingSignalIds));
+        kv(p, k.charAt(0).toUpperCase() + k.slice(1), v);
+      });
+
+      p.appendChild(heading('What must be true'));
+      p.appendChild(bulletList(d.whatMustBeTrue, (li, w) => {
+        li.appendChild(document.createTextNode(w.condition));
+        li.appendChild(unvalidatedTag());
+      }));
+
+      p.appendChild(heading('Riskiest assumption'));
+      const ra = el('p', null, d.riskiestAssumption.assumption);
+      ra.appendChild(unvalidatedTag());
+      p.appendChild(ra);
+      p.appendChild(el('p', null, 'Why risky: ' + d.riskiestAssumption.whyRisky));
+
+      p.appendChild(heading('Key unknowns'));
+      p.appendChild(bulletList(d.unknowns, (li, u) => {
+        li.appendChild(el('strong', null, u.id + ': '));
+        li.appendChild(document.createTextNode(u.notKnown));
+        li.appendChild(el('div', null, 'Why it matters: ' + u.whyItMatters));
+        li.appendChild(el('div', null, 'Best answered from: ' + u.bestAnsweredFrom));
+      }));
+
+      p.appendChild(heading('Discovery questions'));
+      p.appendChild(bulletList(d.discoveryQuestions, (li, q) => {
+        li.appendChild(document.createTextNode(q.question));
+        li.appendChild(el('div', null, 'Addresses: ' + q.addressesUnknownIds.join(', ')));
+      }));
+      return p;
+    }
+
+    // ---------- Internal Discovery Review ----------
+    const IE_ROLES = ['Architect', 'Engineering Lead', 'Product Lead', 'Manager', 'Support / Services', 'Other'];
+    const REVIEW_NOTE =
+      'Internal expert feedback informs and challenges discovery. It does not replace customer evidence or Product Manager judgment.';
+
+    function unverifiedTag() { return el('span', 'unver', 'Unverified internal expert assertion'); }
+    function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+    // Customer Signal IDs and Internal Feedback IDs are always shown in separate groups.
+    function basis(customerIds, internalIds) {
+      const wrap = el('div', 'basis');
+      if (customerIds && customerIds.length) {
+        wrap.appendChild(el('span', null, 'Customer signals:'));
+        customerIds.forEach(id => wrap.appendChild(el('span', 'chip', id)));
+      }
+      if (internalIds && internalIds.length) {
+        wrap.appendChild(el('span', null, 'Internal feedback:'));
+        internalIds.forEach(id => wrap.appendChild(el('span', 'chip ie', id)));
+      }
+      return wrap;
+    }
+
+    function renderInternalPanel(index) {
+      const p = el('div', 'panel internal');
+      p.appendChild(el('h3', null, 'Internal Discovery Review'));
+      p.appendChild(el('p', 'source',
+        'Evidence source: internal reviewer feedback entered by the Product Manager. It is an unverified ' +
+        'expert assertion, not customer evidence and not product evidence. Prototype: feedback is kept in ' +
+        'this browser session only. Use synthetic data only.'));
+
+      const form = el('div', 'ie-form');
+      const role = el('select');
+      IE_ROLES.forEach(r => { const o = el('option', null, r); o.value = r; role.appendChild(o); });
+      const text = el('textarea');
+      text.rows = 3; text.maxLength = 2000; text.placeholder = 'What did the internal reviewer say?';
+      const ref = el('input');
+      ref.type = 'text'; ref.maxLength = 500;
+      const addBtn = el('button', 'btn-amber', 'Add Internal Feedback');
+      addBtn.type = 'button';
+      const addMsg = el('span', 'ie-msg');
+      const addRow = el('div', 'actions');
+      addRow.append(addBtn, addMsg);
+      form.append(el('label', null, 'Reviewer Role'), role,
+                  el('label', null, 'Internal Feedback'), text,
+                  el('label', null, 'Reference / Context (optional)'), ref, addRow);
+      p.appendChild(form);
+
+      const listEl = el('div');
+      p.appendChild(listEl);
+
+      const runBtn = el('button', 'btn-amber', 'Run Internal Review');
+      runBtn.type = 'button';
+      const runStatus = el('span', 'ie-msg');
+      const runRow = el('div', 'actions');
+      runRow.append(runBtn, runStatus);
+      p.appendChild(runRow);
+      const resultEl = el('div');
+      p.appendChild(resultEl);
+
+      const themeItems = () => feedbackItems.filter(f => f.themeIndex === index);
+
+      function refreshList() {
+        listEl.replaceChildren();
+        themeItems().forEach(f => {
+          const card = el('div', 'ie-item');
+          const head = el('div');
+          head.appendChild(el('span', 'chip ie', f.id));
+          head.appendChild(el('strong', null, ' ' + f.reviewerRole));
+          card.appendChild(head);
+          card.appendChild(el('p', null, f.text));
+          if (f.reference) card.appendChild(el('div', 'basis', 'Reference: ' + f.reference));
+          listEl.appendChild(card);
+        });
+        runRow.hidden = themeItems().length === 0;   // Run button only once feedback exists
+      }
+
+      addBtn.addEventListener('click', () => {
+        const t = text.value.trim();
+        if (!t) {
+          addMsg.textContent = 'Please enter the feedback text.';
+          addMsg.classList.add('error');
+          return;
+        }
+        addMsg.textContent = '';
+        addMsg.classList.remove('error');
+        const id = 'IE' + String(nextIeNumber++).padStart(3, '0');
+        feedbackItems.push({ id, themeIndex: index, reviewerRole: role.value, text: t, reference: ref.value.trim() });
+        reviewResults.delete(index);              // new feedback makes an earlier review out of date
+        resultEl.replaceChildren();
+        runStatus.textContent = '';
+        text.value = '';
+        ref.value = '';
+        refreshList();
+      });
+
+      runBtn.addEventListener('click', async () => {
+        const r = currentResults[index];
+        const items = themeItems().map(f => ({
+          id: f.id, reviewerRole: f.reviewerRole, text: f.text, reference: f.reference || null
+        }));
+        resultEl.replaceChildren();
+        reviewResults.delete(index);
+        runBtn.disabled = true;
+        runStatus.classList.remove('error');
+        runStatus.textContent = 'Running internal review with Claude. This can take a minute...';
+        try {
+          const res = await fetch('/api/review', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ discovery: r.discovery, capability: r.capability, feedback: items })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            runStatus.textContent = data.error || 'The internal review could not be completed.';
+            runStatus.classList.add('error');
+          } else {
+            reviewResults.set(index, data.review);
+            renderReviewResult(resultEl, data.review);
+            runStatus.textContent = 'Internal review complete.';
+          }
+        } catch (e) {
+          resultEl.replaceChildren();
+          runStatus.textContent = 'Could not complete the internal review. Please try again.';
+          runStatus.classList.add('error');
+        } finally {
+          runBtn.disabled = false;
+        }
+      });
+
+      refreshList();
+      if (reviewResults.has(index)) renderReviewResult(resultEl, reviewResults.get(index));
+      return p;
+    }
+
+    function renderReviewResult(container, rv) {
+      container.replaceChildren();
+      const box = el('div', 'ie-result');
+
+      box.appendChild(heading('Original Hypothesis (unchanged)'));
+      ['who', 'what', 'why'].forEach(k => {
+        const part = rv.originalHypothesis[k];
+        if (part && part.text) kv(box, capitalize(k), part.text);
+      });
+
+      box.appendChild(heading('Internal Expert Evidence'));
+      rv.feedbackAssessments.forEach(a => {
+        const card = el('div', 'ie-card');
+        const head = el('div');
+        head.appendChild(el('span', 'chip ie', a.internalFeedbackId));
+        head.appendChild(el('strong', null, ' ' + a.reviewerRole));
+        head.appendChild(el('span', 'badge imp', a.impact));
+        card.appendChild(head);
+        card.appendChild(el('p', null, a.feedbackText));
+        if (a.referenceContext) card.appendChild(el('div', 'basis', 'Reference: ' + a.referenceContext));
+        card.appendChild(unverifiedTag());
+        card.appendChild(el('p', null, 'Impact rationale: ' + a.rationale));
+        box.appendChild(card);
+      });
+
+      box.appendChild(heading('Overall Hypothesis Impact'));
+      box.appendChild(el('span', 'badge imp', rv.overallHypothesisImpact));
+
+      const hyp = rv.hypothesisAfterReview;
+      if (hyp.materiallyChanged && hyp.revisedHypothesis.length) {
+        box.appendChild(heading('Revised Hypothesis (separate from the original)'));
+        box.appendChild(el('p', null, hyp.rationale));
+        const rh = hyp.revisedHypothesis[0];
+        ['who', 'what', 'why'].forEach(k => {
+          const part = rh[k];
+          if (!part) return;
+          const v = el('div');
+          v.appendChild(document.createTextNode(part.text));
+          v.appendChild(unvalidatedTag());
+          v.appendChild(basis(part.supportingCustomerSignalIds, part.supportingInternalFeedbackIds));
+          kv(box, capitalize(k), v);
+        });
+      }
+
+      box.appendChild(heading('New / Changed Unknowns'));
+      if (!rv.newOrChangedUnknowns.length) box.appendChild(el('p', null, 'None.'));
+      else box.appendChild(bulletList(rv.newOrChangedUnknowns, (li, u) => {
+        li.appendChild(el('strong', null, `${u.id} (${u.changeType}): `));
+        li.appendChild(document.createTextNode(u.notKnown));
+        li.appendChild(el('div', null, 'Why it matters: ' + u.whyItMatters));
+        li.appendChild(el('div', null, 'Best answered from: ' + u.bestAnsweredFrom));
+        li.appendChild(basis(u.supportingCustomerSignalIds, u.supportingInternalFeedbackIds));
+      }));
+
+      box.appendChild(heading('Constraints'));
+      if (!rv.constraints.length) box.appendChild(el('p', null, 'None.'));
+      else box.appendChild(bulletList(rv.constraints, (li, c) => {
+        li.appendChild(document.createTextNode(c.statement + ' '));
+        li.appendChild(unverifiedTag());
+        li.appendChild(basis([], c.supportingInternalFeedbackIds));
+      }));
+
+      const ra = rv.riskiestAssumption;
+      if (ra.materiallyChanged && ra.revisedAssumption.length) {
+        box.appendChild(heading('Revised Riskiest Assumption'));
+        box.appendChild(el('p', null, ra.rationale));
+        const r1 = ra.revisedAssumption[0];
+        const line = el('p', null, r1.assumption);
+        line.appendChild(unvalidatedTag());
+        box.appendChild(line);
+        box.appendChild(el('p', null, 'Why risky: ' + r1.whyRisky));
+        box.appendChild(basis(r1.supportingCustomerSignalIds, r1.supportingInternalFeedbackIds));
+      }
+
+      box.appendChild(heading('Updated Discovery Questions'));
+      if (!rv.updatedDiscoveryQuestions.length) box.appendChild(el('p', null, 'None.'));
+      else box.appendChild(bulletList(rv.updatedDiscoveryQuestions, (li, q) => {
+        li.appendChild(el('span', `badge aud-${q.audience}`, q.audience));
+        li.appendChild(document.createTextNode(' ' + q.question));
+        li.appendChild(el('div', null, 'Addresses: ' + q.addressesUnknownIds.join(', ')));
+        li.appendChild(basis(q.supportingCustomerSignalIds, q.supportingInternalFeedbackIds));
+      }));
+
+      box.appendChild(el('p', 'footnote', REVIEW_NOTE));
+      container.appendChild(box);
+    }
+
+    // Sends only the Excel file to the server, which reads it in memory, runs the AI pipeline,
+    // and returns validated results. If anything fails, an error is shown and no partial results.
+    analyzeBtn.addEventListener('click', async () => {
+      if (!input.files.length) {
+        setStatus('Please choose an Excel file first.', true);
+        return;
+      }
+      clearResults();
+      const form = new FormData();
+      form.append('file', input.files[0]);
+      analyzeBtn.disabled = true;
+      setStatus('Analyzing signals with Claude. This can take a few minutes...');
+      try {
+        const res = await fetch('/api/analyze', { method: 'POST', body: form });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setStatus(data.error || 'The server could not analyze the file.', true);
+        } else {
+          renderReceived(data);
+          renderThemes(data.analysis.results);
+          setStatus(`Analysis complete: ${data.analysis.results.length} theme(s) found.`);
+        }
+      } catch (e) {
+        clearResults();
+        setStatus('Could not complete the analysis. Please try again.', true);
+      } finally {
+        analyzeBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

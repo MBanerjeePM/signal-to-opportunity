@@ -1,0 +1,192 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Discovery Brief",
+  "description": "Output of the Signal to Opportunity analysis, following DISCOVERY_LOGIC.md. Signals are the only evidence; everything else is an inference, hypothesis or unknown and is unvalidated.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["themes"],
+  "properties": {
+    "themes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/theme" }
+    }
+  },
+  "definitions": {
+    "signalIds": {
+      "description": "Signal IDs exactly as they appear in the source data. Never merged, dropped or renumbered.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "theme",
+        "themeRationale",
+        "supportingSignalIds",
+        "facts",
+        "inferences",
+        "counterEvidence",
+        "opportunityHypothesis",
+        "whatMustBeTrue",
+        "riskiestAssumption",
+        "unknowns",
+        "discoveryQuestions"
+      ],
+      "properties": {
+        "theme": { "type": "string", "minLength": 1, "description": "Short theme name." },
+        "themeRationale": {
+          "type": "string",
+          "minLength": 1,
+          "description": "One sentence on why these signals belong together."
+        },
+        "supportingSignalIds": { "$ref": "#/definitions/signalIds" },
+        "facts": {
+          "description": "Only what the signals directly state, including observable patterns such as number of customers or sources.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["statement", "supportingSignalIds"],
+            "properties": {
+              "statement": { "type": "string", "minLength": 1 },
+              "supportingSignalIds": { "$ref": "#/definitions/signalIds" }
+            }
+          }
+        },
+        "inferences": {
+          "description": "Conclusions drawn by combining signals that customers did not state. Always unvalidated.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["statement", "reliesOn", "supportingSignalIds", "unvalidated"],
+            "properties": {
+              "statement": { "type": "string", "minLength": 1 },
+              "reliesOn": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Which facts this inference is built from."
+              },
+              "supportingSignalIds": { "$ref": "#/definitions/signalIds" },
+              "unvalidated": { "type": "boolean", "enum": [true] }
+            }
+          }
+        },
+        "counterEvidence": {
+          "description": "Alternative explanations, contradictory signals, or evidence that weakens the opportunity. Empty when the input contains none; absence is not confirmation.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["statement", "type", "supportingSignalIds"],
+            "properties": {
+              "statement": { "type": "string", "minLength": 1 },
+              "type": {
+                "type": "string",
+                "enum": ["contradictory signal", "alternative explanation", "weakening evidence"]
+              },
+              "supportingSignalIds": {
+                "description": "Signal IDs this rests on. Empty only if no signal applies, e.g. an alternative explanation not drawn from a specific signal.",
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        },
+        "opportunityHypothesis": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["who", "what", "why"],
+          "properties": {
+            "who": { "$ref": "#/definitions/hypothesisPart" },
+            "what": { "$ref": "#/definitions/hypothesisPart" },
+            "why": { "$ref": "#/definitions/hypothesisPart" }
+          }
+        },
+        "whatMustBeTrue": {
+          "description": "Key conditions that would need to be true for this to be a meaningful product opportunity. Always unvalidated.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["condition", "unvalidated"],
+            "properties": {
+              "condition": { "type": "string", "minLength": 1 },
+              "unvalidated": { "type": "boolean", "enum": [true] }
+            }
+          }
+        },
+        "riskiestAssumption": {
+          "description": "The one assumption that, if wrong, would most undermine the opportunity, and that should be validated first. Always unvalidated.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["assumption", "whyRisky", "unvalidated"],
+          "properties": {
+            "assumption": { "type": "string", "minLength": 1 },
+            "whyRisky": { "type": "string", "minLength": 1 },
+            "unvalidated": { "type": "boolean", "enum": [true] }
+          }
+        },
+        "unknowns": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "notKnown", "whyItMatters", "bestAnsweredFrom"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1, "description": "Unique within the theme, e.g. U1." },
+              "notKnown": { "type": "string", "minLength": 1 },
+              "whyItMatters": { "type": "string", "minLength": 1 },
+              "bestAnsweredFrom": {
+                "type": "string",
+                "enum": ["customers", "internal data", "both"]
+              }
+            }
+          }
+        },
+        "discoveryQuestions": {
+          "description": "About 5 open-ended questions that explore the problem, not a predetermined solution.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["question", "addressesUnknownIds"],
+            "properties": {
+              "question": { "type": "string", "minLength": 1 },
+              "addressesUnknownIds": {
+                "description": "The id values of the unknowns in this theme that the question helps answer.",
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "hypothesisPart": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "supportingSignalIds", "unvalidated"],
+      "properties": {
+        "text": { "type": "string", "minLength": 1 },
+        "supportingSignalIds": {
+          "description": "Signal IDs that directly support this part. Empty if none do.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "unvalidated": {
+          "type": "boolean",
+          "description": "True for any part not directly supported by the signals."
+        }
+      }
+    }
+  }
+}

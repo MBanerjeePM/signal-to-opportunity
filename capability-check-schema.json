@@ -1,0 +1,167 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Capability Check",
+  "description": "Output of the Product Capability Validation stage: for each customer theme, what the product MRG documents about the requested capability. 'Not Found' means only that the capability was not located in the provided MRG text. It never means the capability is unsupported. MRG evidence is kept separate from customer-signal evidence. Never invent MRG text or references.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["capabilityChecks"],
+  "properties": {
+    "capabilityChecks": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/capabilityCheck" }
+    }
+  },
+  "definitions": {
+    "capabilityCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "theme",
+        "customerSignalIds",
+        "requestedCapability",
+        "assessment",
+        "mrgEvidence",
+        "evidenceStrength",
+        "evidenceStrengthReason",
+        "pmInterpretation",
+        "explanation"
+      ],
+      "properties": {
+        "theme": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of the customer theme being checked."
+        },
+        "customerSignalIds": {
+          "description": "Customer Signal IDs behind this theme. This is customer-signal evidence only; it is never MRG evidence.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "requestedCapability": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The capability or customer need being checked, as the customer signals state it."
+        },
+        "assessment": {
+          "type": "string",
+          "enum": ["Supported", "Partially Supported", "Not Found", "Unclear"],
+          "description": "Supported and Partially Supported need one or more MRG quotes. Unclear may include related quotes when related documentation exists but its scope, workflow, object, capability or outcome does not match the customer need. Not Found has no quotes and means only not located in the provided MRG text, never 'unsupported'."
+        },
+        "mrgEvidence": {
+          "description": "Exact text copied from the MRG only, each with its page or section. Required (1 or more) for Supported and Partially Supported. For Unclear, optional related quotes that are not proof of support. Empty for Not Found.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["exactEvidenceText", "pageOrSection", "directness"],
+            "properties": {
+              "exactEvidenceText": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Verbatim MRG text, not paraphrased. The app verifies it appears in the MRG."
+              },
+              "pageOrSection": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Page number or section heading exactly as given with the MRG text. If it cannot be identified, write 'Not identifiable from the provided text'. Never guess."
+              },
+              "directness": {
+                "type": "string",
+                "enum": ["explicit", "related", "implied"],
+                "description": "explicit: the text directly describes the requested capability. related: describes something nearby, not proof of support. implied: the capability can only be inferred. Unclear quotes must be related or implied."
+              }
+            }
+          }
+        },
+        "evidenceStrength": {
+          "type": "string",
+          "enum": ["High", "Medium", "Low"],
+          "description": "High requires at least one explicit MRG evidence item. Not Found and Unclear are always Low."
+        },
+        "evidenceStrengthReason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Plain-language reason for the strength rating. No numerical confidence."
+        },
+        "pmInterpretation": {
+          "type": "string",
+          "enum": [
+            "Possible missing capability",
+            "Possible discoverability/awareness issue",
+            "Possible configuration issue",
+            "Possible workflow/usability issue",
+            "Needs further investigation"
+          ],
+          "description": "An unvalidated reading for the PM, not a conclusion. Not Found and Unclear are always 'Needs further investigation'."
+        },
+        "explanation": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why this assessment and interpretation, citing only what the MRG evidence and customer need actually say."
+        }
+      },
+      "allOf": [
+        {
+          "description": "Supported or Partially Supported requires MRG evidence.",
+          "if": {
+            "properties": { "assessment": { "enum": ["Supported", "Partially Supported"] } },
+            "required": ["assessment"]
+          },
+          "then": { "properties": { "mrgEvidence": { "minItems": 1 } } }
+        },
+        {
+          "description": "Not Found: no relevant evidence was located, so no MRG quotes. Low strength, further investigation. Absence from the MRG is not proof of absence from the product.",
+          "if": {
+            "properties": { "assessment": { "const": "Not Found" } },
+            "required": ["assessment"]
+          },
+          "then": {
+            "properties": {
+              "mrgEvidence": { "maxItems": 0 },
+              "evidenceStrength": { "const": "Low" },
+              "pmInterpretation": { "const": "Needs further investigation" }
+            }
+          }
+        },
+        {
+          "description": "Unclear: related quotes are allowed (zero or more) but are related evidence only, never proof of support, so each must be marked related or implied. Low strength, further investigation.",
+          "if": {
+            "properties": { "assessment": { "const": "Unclear" } },
+            "required": ["assessment"]
+          },
+          "then": {
+            "properties": {
+              "mrgEvidence": {
+                "items": {
+                  "properties": { "directness": { "enum": ["related", "implied"] } }
+                }
+              },
+              "evidenceStrength": { "const": "Low" },
+              "pmInterpretation": { "const": "Needs further investigation" }
+            }
+          }
+        },
+        {
+          "description": "High strength requires at least one explicit MRG evidence item.",
+          "if": {
+            "properties": { "evidenceStrength": { "const": "High" } },
+            "required": ["evidenceStrength"]
+          },
+          "then": {
+            "properties": {
+              "mrgEvidence": {
+                "contains": {
+                  "type": "object",
+                  "properties": { "directness": { "const": "explicit" } },
+                  "required": ["directness"]
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
