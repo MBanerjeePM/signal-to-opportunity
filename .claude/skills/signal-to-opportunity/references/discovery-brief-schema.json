@@ -1,0 +1,313 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Discovery Brief",
+  "description": "Output of the Signal to Opportunity analysis, following DISCOVERY_LOGIC.md. Signals are the only evidence; everything else is an inference, hypothesis or unknown and is unvalidated.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["themes"],
+  "properties": {
+    "themes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/theme" }
+    }
+  },
+  "definitions": {
+    "signalIds": {
+      "description": "Signal IDs exactly as they appear in the source data. Never merged, dropped or renumbered.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "theme",
+        "themeRationale",
+        "supportingSignalIds",
+        "facts",
+        "inferences",
+        "counterEvidence",
+        "opportunityHypothesis",
+        "whatMustBeTrue",
+        "riskiestAssumption",
+        "unknowns",
+        "discoveryQuestions"
+      ],
+      "properties": {
+        "theme": { "type": "string", "minLength": 1, "description": "Short theme name." },
+        "themeRationale": {
+          "type": "string",
+          "minLength": 1,
+          "description": "One sentence on why these signals belong together."
+        },
+        "supportingSignalIds": { "$ref": "#/definitions/signalIds" },
+        "facts": {
+          "description": "Only what the signals directly state, including observable patterns such as number of customers or sources.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["statement", "supportingSignalIds"],
+            "properties": {
+              "statement": { "type": "string", "minLength": 1 },
+              "supportingSignalIds": { "$ref": "#/definitions/signalIds" }
+            }
+          }
+        },
+        "inferences": {
+          "description": "Conclusions drawn by combining signals that customers did not state. Always unvalidated.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["statement", "reliesOn", "supportingSignalIds", "unvalidated"],
+            "properties": {
+              "statement": { "type": "string", "minLength": 1 },
+              "reliesOn": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Which facts this inference is built from."
+              },
+              "supportingSignalIds": { "$ref": "#/definitions/signalIds" },
+              "unvalidated": { "type": "boolean", "enum": [true] }
+            }
+          }
+        },
+        "counterEvidence": {
+          "description": "Alternative explanations, contradictory signals, or evidence that weakens the opportunity. Empty when the input contains none; absence is not confirmation.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["statement", "type", "supportingSignalIds"],
+            "properties": {
+              "statement": { "type": "string", "minLength": 1 },
+              "type": {
+                "type": "string",
+                "enum": ["contradictory signal", "alternative explanation", "weakening evidence"]
+              },
+              "supportingSignalIds": {
+                "description": "Signal IDs this rests on. Empty only if no signal applies, e.g. an alternative explanation not drawn from a specific signal.",
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        },
+        "opportunityHypothesis": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["who", "what", "why"],
+          "properties": {
+            "who": { "$ref": "#/definitions/hypothesisPart" },
+            "what": { "$ref": "#/definitions/hypothesisPart" },
+            "why": { "$ref": "#/definitions/hypothesisPart" }
+          }
+        },
+        "whatMustBeTrue": {
+          "description": "Key conditions that would need to be true for this to be a meaningful product opportunity. Always unvalidated.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["condition", "unvalidated"],
+            "properties": {
+              "condition": { "type": "string", "minLength": 1 },
+              "unvalidated": { "type": "boolean", "enum": [true] }
+            }
+          }
+        },
+        "riskiestAssumption": {
+          "description": "The unproven belief that could most seriously weaken or change the opportunity if it turns out to be wrong. Keep it visibly separate from facts and inferences. Never treat it as fact. It should normally be tested by at least one P0 discovery question.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["assumption", "whyItMatters", "status", "supportingSignalIds"],
+          "properties": {
+            "assumption": { "type": "string", "minLength": 1 },
+            "whyItMatters": {
+              "type": "string",
+              "minLength": 1,
+              "description": "What would change about the opportunity if the assumption is wrong."
+            },
+            "status": { "type": "string", "enum": ["Unvalidated"] },
+            "supportingSignalIds": {
+              "description": "Customer Signal IDs the assumption rests on. May be empty only when supportingInternalFeedbackIds is non-empty. Never list IDs only because the theme has them.",
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "supportingInternalFeedbackIds": { "$ref": "#/definitions/internalFeedbackIds" },
+            "whyRisky": {
+              "description": "Legacy field, kept for compatibility. Superseded by whyItMatters.",
+              "type": "string",
+              "minLength": 1
+            },
+            "unvalidated": {
+              "description": "Legacy field, kept for compatibility. Superseded by status.",
+              "type": "boolean",
+              "enum": [true]
+            }
+          },
+          "anyOf": [
+            { "properties": { "supportingSignalIds": { "minItems": 1 } } },
+            { "required": ["supportingInternalFeedbackIds"], "properties": { "supportingInternalFeedbackIds": { "minItems": 1 } } }
+          ]
+        },
+        "unknowns": {
+          "description": "What is not known that a Product Manager needs before judging the opportunity. Do not answer unknowns. Non-functional unknowns are included only when materially relevant, meaning they could affect whether the opportunity is meaningful, workflow impact, feasibility, risk, customer expectations, adoption, or how the problem is defined. Never invent performance thresholds, file-size limits, concurrency levels, accessibility requirements, security requirements, or other non-functional requirements.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["unknownId", "unknown", "whyItMatters", "source", "type"],
+            "properties": {
+              "unknownId": { "type": "string", "minLength": 1, "description": "Unique within the theme, e.g. U1." },
+              "unknown": { "type": "string", "minLength": 1, "description": "What is not known." },
+              "whyItMatters": { "type": "string", "minLength": 1 },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "Riskiest Assumption",
+                  "Missing Customer Evidence",
+                  "Counter-Evidence",
+                  "Capability Validation",
+                  "Internal Expert Feedback",
+                  "Other Evidence Gap"
+                ]
+              },
+              "type": { "type": "string", "enum": ["Functional", "Non-Functional"] },
+              "nonFunctionalCategory": { "$ref": "#/definitions/nonFunctionalCategory" },
+              "bestAnsweredFrom": {
+                "description": "Optional. Where the answer is most likely to come from.",
+                "type": "string",
+                "enum": ["customers", "internal data", "both"]
+              },
+              "id": {
+                "description": "Legacy field, kept for compatibility. Superseded by unknownId.",
+                "type": "string",
+                "minLength": 1
+              },
+              "notKnown": {
+                "description": "Legacy field, kept for compatibility. Superseded by unknown.",
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "if": { "properties": { "type": { "const": "Non-Functional" } } },
+            "then": {},
+            "else": { "not": { "required": ["nonFunctionalCategory"] } }
+          }
+        },
+        "discoveryQuestions": {
+          "description": "Open-ended, non-leading questions that explore the problem, not a predetermined solution. priority is DISCOVERY-LEARNING priority only (how soon the answer is needed to learn). It is NOT product, roadmap, implementation, defect, or business priority, and must never be used to suggest what to build first. P0 = learn first, because the answer could validate, invalidate, or materially reframe the opportunity or the Riskiest Assumption. P1 = important next, for impact, scope, constraints, frequency, workaround, or non-functional expectations. P2 = useful context unlikely to change the opportunity by itself. At least one P0 question should address the Riskiest Assumption when the evidence supports a suitable validation question. Customer questions are open-ended and non-leading. Internal questions validate architecture, technical constraints, permissions, product history, documented functionality, support patterns, feasibility, or operational context. Include non-functional questions only when materially relevant, and never invent non-functional thresholds or requirements.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "priority",
+              "question",
+              "priorityReason",
+              "audience",
+              "type",
+              "unknownsAddressed",
+              "riskiestAssumptionAddressed",
+              "supportingSignalIds",
+              "supportingInternalFeedbackIds"
+            ],
+            "properties": {
+              "priority": {
+                "description": "Discovery-learning priority only. Not product, roadmap, implementation, defect, or business priority.",
+                "type": "string",
+                "enum": ["P0", "P1", "P2"]
+              },
+              "question": { "type": "string", "minLength": 1 },
+              "priorityReason": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Why this question has this discovery-learning priority."
+              },
+              "audience": { "type": "string", "enum": ["Customer", "Internal"] },
+              "type": { "type": "string", "enum": ["Functional", "Non-Functional"] },
+              "nonFunctionalCategory": { "$ref": "#/definitions/nonFunctionalCategory" },
+              "unknownsAddressed": {
+                "description": "The unknownId values of the unknowns in this theme that the question helps answer.",
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "riskiestAssumptionAddressed": { "type": "string", "enum": ["Yes", "No"] },
+              "supportingSignalIds": {
+                "description": "Customer Signal IDs behind the question. May be empty only when supportingInternalFeedbackIds is non-empty.",
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "supportingInternalFeedbackIds": { "$ref": "#/definitions/internalFeedbackIds" },
+              "addressesUnknownIds": {
+                "description": "Legacy field, kept for compatibility. Superseded by unknownsAddressed.",
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              }
+            },
+            "allOf": [
+              {
+                "if": { "properties": { "type": { "const": "Non-Functional" } } },
+                "then": {},
+                "else": { "not": { "required": ["nonFunctionalCategory"] } }
+              },
+              {
+                "anyOf": [
+                  { "properties": { "supportingSignalIds": { "minItems": 1 } } },
+                  { "properties": { "supportingInternalFeedbackIds": { "minItems": 1 } } }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    "internalFeedbackIds": {
+      "description": "Internal Feedback IDs (e.g. IE001) exactly as submitted. Kept separate from customer Signal IDs, never merged into the same field. Empty or omitted when no internal feedback applies. Internal feedback is unverified expert assertion, never customer evidence.",
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "nonFunctionalCategory": {
+      "description": "Allowed only when type is Non-Functional. Use only when materially relevant. Never invent thresholds or requirements.",
+      "type": "string",
+      "enum": [
+        "Performance",
+        "Scalability / Concurrency",
+        "File Size / Page Count / Data Volume",
+        "Usability",
+        "Accessibility",
+        "Security / Permissions",
+        "Reliability",
+        "Availability",
+        "Compatibility",
+        "Auditability / Compliance"
+      ]
+    },
+    "hypothesisPart": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "supportingSignalIds", "unvalidated"],
+      "properties": {
+        "text": { "type": "string", "minLength": 1 },
+        "supportingSignalIds": {
+          "description": "Signal IDs that directly support this part. Empty if none do.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "unvalidated": {
+          "type": "boolean",
+          "description": "True for any part not directly supported by the signals."
+        }
+      }
+    }
+  }
+}

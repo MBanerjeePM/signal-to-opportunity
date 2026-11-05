@@ -1,0 +1,399 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Internal Review",
+  "description": "Output of the Internal Discovery Review stage for one theme, following INTERNAL_REVIEW_LOGIC.md. Internal Expert Evidence (cited by Internal Feedback ID, IE...) is kept separate from Customer Evidence (cited by Signal ID) and from Product Evidence. Every revised claim states its basis in two separate fields: supportingCustomerSignalIds and supportingInternalFeedbackIds. Internal feedback is an unverified expert assertion. This schema has no priority, score, ranking, voting or reviewer-name field.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "theme",
+    "originalHypothesis",
+    "feedbackAssessments",
+    "overallHypothesisImpact",
+    "hypothesisAfterReview",
+    "newOrChangedUnknowns",
+    "constraints",
+    "riskiestAssumption",
+    "updatedDiscoveryQuestions"
+  ],
+  "properties": {
+    "theme": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Name of the theme under review."
+    },
+    "originalHypothesis": {
+      "description": "Copied exactly from the existing Discovery Brief. Never reconstructed, completed or rewritten. A part that is absent in the original stays absent here, or has empty text. No placeholder text. The application replaces or verifies this copy.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "who": { "$ref": "#/definitions/originalHypothesisPart" },
+        "what": { "$ref": "#/definitions/originalHypothesisPart" },
+        "why": { "$ref": "#/definitions/originalHypothesisPart" }
+      }
+    },
+    "feedbackAssessments": {
+      "description": "One assessment for every submitted internal feedback item, each exactly once.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "internalFeedbackId",
+          "reviewerRole",
+          "feedbackText",
+          "evidenceClass",
+          "verificationStatus",
+          "impact",
+          "rationale"
+        ],
+        "properties": {
+          "internalFeedbackId": { "$ref": "#/definitions/internalFeedbackId" },
+          "reviewerRole": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Role as submitted, such as Architect. Never a person's name."
+          },
+          "feedbackText": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The feedback exactly as submitted."
+          },
+          "referenceContext": {
+            "type": "string",
+            "description": "Optional reference or context as submitted. Omit when none was given."
+          },
+          "evidenceClass": {
+            "type": "string",
+            "const": "Internal Expert Evidence"
+          },
+          "verificationStatus": {
+            "type": "string",
+            "const": "Unverified expert assertion",
+            "description": "Internal feedback stays an unverified assertion until verified outside this review."
+          },
+          "impact": {
+            "type": "string",
+            "enum": [
+              "Strengthens hypothesis",
+              "Weakens hypothesis",
+              "Refines hypothesis",
+              "Introduces new constraint",
+              "Introduces new unknown",
+              "No material impact"
+            ]
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Brief reason for the classification, based on what the feedback says. Not on seniority or number of reviewers."
+          }
+        }
+      }
+    },
+    "overallHypothesisImpact": {
+      "type": "string",
+      "enum": [
+        "Strengthened",
+        "Weakened",
+        "Refined",
+        "New constraint introduced",
+        "New unknown introduced",
+        "No material change"
+      ]
+    },
+    "hypothesisAfterReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["materiallyChanged", "rationale", "supportingInternalFeedbackIds", "revisedHypothesis"],
+      "properties": {
+        "materiallyChanged": { "type": "boolean" },
+        "rationale": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why the hypothesis was or was not materially changed."
+        },
+        "supportingInternalFeedbackIds": {
+          "description": "Internal Feedback IDs that justify the change. Empty when not changed.",
+          "type": "array",
+          "items": { "$ref": "#/definitions/internalFeedbackId" }
+        },
+        "revisedHypothesis": {
+          "description": "Exactly one revised hypothesis when materially changed. Empty otherwise. Never replaces originalHypothesis.",
+          "type": "array",
+          "maxItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["what"],
+            "properties": {
+              "who": { "$ref": "#/definitions/revisedHypothesisPart" },
+              "what": { "$ref": "#/definitions/revisedHypothesisPart" },
+              "why": { "$ref": "#/definitions/revisedHypothesisPart" }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "materiallyChanged": { "const": true } },
+            "required": ["materiallyChanged"]
+          },
+          "then": {
+            "properties": {
+              "supportingInternalFeedbackIds": { "minItems": 1 },
+              "revisedHypothesis": { "minItems": 1 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "materiallyChanged": { "const": false } },
+            "required": ["materiallyChanged"]
+          },
+          "then": {
+            "properties": { "revisedHypothesis": { "maxItems": 0 } }
+          }
+        }
+      ]
+    },
+    "newOrChangedUnknowns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "changeType",
+          "notKnown",
+          "whyItMatters",
+          "bestAnsweredFrom",
+          "supportingCustomerSignalIds",
+          "supportingInternalFeedbackIds"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "For a changed unknown, the id of the original unknown. For a new one, a new id."
+          },
+          "changeType": { "type": "string", "enum": ["new", "changed"] },
+          "notKnown": { "type": "string", "minLength": 1 },
+          "whyItMatters": { "type": "string", "minLength": 1 },
+          "bestAnsweredFrom": {
+            "type": "string",
+            "enum": ["customers", "internal data", "both"]
+          },
+          "supportingCustomerSignalIds": { "$ref": "#/definitions/customerSignalIds" },
+          "supportingInternalFeedbackIds": { "$ref": "#/definitions/internalFeedbackIdList" }
+        },
+        "allOf": [
+          {
+            "description": "Every claim has a basis: if no customer Signal IDs, then at least one Internal Feedback ID.",
+            "if": {
+              "properties": { "supportingCustomerSignalIds": { "maxItems": 0 } },
+              "required": ["supportingCustomerSignalIds"]
+            },
+            "then": { "properties": { "supportingInternalFeedbackIds": { "minItems": 1 } } }
+          }
+        ]
+      }
+    },
+    "constraints": {
+      "description": "Constraints raised by internal feedback. Each is an unverified internal assertion, so it cites no customer Signal IDs.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["statement", "supportingCustomerSignalIds", "supportingInternalFeedbackIds", "unvalidated"],
+        "properties": {
+          "statement": { "type": "string", "minLength": 1 },
+          "supportingCustomerSignalIds": {
+            "description": "Always empty: a constraint comes from internal feedback only.",
+            "type": "array",
+            "maxItems": 0,
+            "items": { "type": "string" }
+          },
+          "supportingInternalFeedbackIds": { "$ref": "#/definitions/internalFeedbackIds" },
+          "unvalidated": { "type": "boolean", "enum": [true] }
+        }
+      }
+    },
+    "riskiestAssumption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["materiallyChanged", "rationale", "supportingInternalFeedbackIds", "revisedAssumption"],
+      "properties": {
+        "materiallyChanged": { "type": "boolean" },
+        "rationale": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why the riskiest assumption was or was not materially changed."
+        },
+        "supportingInternalFeedbackIds": {
+          "description": "Internal Feedback IDs that justify the change. Empty when not changed.",
+          "type": "array",
+          "items": { "$ref": "#/definitions/internalFeedbackId" }
+        },
+        "revisedAssumption": {
+          "description": "Exactly one revised assumption when materially changed. Empty otherwise.",
+          "type": "array",
+          "maxItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["assumption", "whyRisky", "supportingCustomerSignalIds", "supportingInternalFeedbackIds", "unvalidated"],
+            "properties": {
+              "assumption": { "type": "string", "minLength": 1 },
+              "whyRisky": { "type": "string", "minLength": 1 },
+              "supportingCustomerSignalIds": { "$ref": "#/definitions/customerSignalIds" },
+              "supportingInternalFeedbackIds": { "$ref": "#/definitions/internalFeedbackIdList" },
+              "unvalidated": { "type": "boolean", "enum": [true] }
+            },
+            "allOf": [
+              {
+                "description": "Every claim has a basis: if no customer Signal IDs, then at least one Internal Feedback ID.",
+                "if": {
+                  "properties": { "supportingCustomerSignalIds": { "maxItems": 0 } },
+                  "required": ["supportingCustomerSignalIds"]
+                },
+                "then": { "properties": { "supportingInternalFeedbackIds": { "minItems": 1 } } }
+              }
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "materiallyChanged": { "const": true } },
+            "required": ["materiallyChanged"]
+          },
+          "then": {
+            "properties": {
+              "supportingInternalFeedbackIds": { "minItems": 1 },
+              "revisedAssumption": { "minItems": 1 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "materiallyChanged": { "const": false } },
+            "required": ["materiallyChanged"]
+          },
+          "then": {
+            "properties": { "revisedAssumption": { "maxItems": 0 } }
+          }
+        }
+      ]
+    },
+    "updatedDiscoveryQuestions": {
+      "description": "Only questions justified by the internal feedback. Each is labelled Customer or Internal. Customer questions are open-ended and non-leading and explore the problem, not a solution. Internal questions check architecture, constraints, scope, product history, support patterns, implementation context or internal documentation.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "question",
+          "audience",
+          "addressesUnknownIds",
+          "supportingCustomerSignalIds",
+          "supportingInternalFeedbackIds"
+        ],
+        "properties": {
+          "question": { "type": "string", "minLength": 1 },
+          "audience": {
+            "type": "string",
+            "enum": ["Customer", "Internal"]
+          },
+          "addressesUnknownIds": {
+            "description": "Ids of unknowns (original or new or changed) that the question helps answer.",
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "supportingCustomerSignalIds": { "$ref": "#/definitions/customerSignalIds" },
+          "supportingInternalFeedbackIds": { "$ref": "#/definitions/internalFeedbackIdList" }
+        },
+        "allOf": [
+          {
+            "description": "Every claim has a basis: if no customer Signal IDs, then at least one Internal Feedback ID.",
+            "if": {
+              "properties": { "supportingCustomerSignalIds": { "maxItems": 0 } },
+              "required": ["supportingCustomerSignalIds"]
+            },
+            "then": { "properties": { "supportingInternalFeedbackIds": { "minItems": 1 } } }
+          },
+          {
+            "description": "An Internal question checks an internal assertion, so it cites at least one Internal Feedback ID.",
+            "if": {
+              "properties": { "audience": { "const": "Internal" } },
+              "required": ["audience"]
+            },
+            "then": { "properties": { "supportingInternalFeedbackIds": { "minItems": 1 } } }
+          }
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "internalFeedbackId": {
+      "description": "A submitted Internal Feedback ID such as IE001, exactly as submitted.",
+      "type": "string",
+      "pattern": "^IE[0-9]+$"
+    },
+    "internalFeedbackIds": {
+      "description": "One or more Internal Feedback IDs (internal expert evidence).",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/internalFeedbackId" }
+    },
+    "internalFeedbackIdList": {
+      "description": "Internal Feedback IDs (internal expert evidence). Empty when the claim is based only on customer evidence.",
+      "type": "array",
+      "items": { "$ref": "#/definitions/internalFeedbackId" }
+    },
+    "customerSignalIds": {
+      "description": "Customer Signal IDs (customer evidence only, never an IE ID). Empty when the claim is based only on internal feedback. Do not list a Signal ID that does not support the claim itself.",
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "originalHypothesisPart": {
+      "description": "Exact copy of a part of the original hypothesis. Text may be empty if the original is empty. Never generated.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "supportingSignalIds", "unvalidated"],
+      "properties": {
+        "text": { "type": "string" },
+        "supportingSignalIds": {
+          "description": "Copied from the original Discovery Brief.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "unvalidated": { "type": "boolean" }
+      }
+    },
+    "revisedHypothesisPart": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "supportingCustomerSignalIds", "supportingInternalFeedbackIds", "unvalidated"],
+      "properties": {
+        "text": { "type": "string", "minLength": 1 },
+        "supportingCustomerSignalIds": { "$ref": "#/definitions/customerSignalIds" },
+        "supportingInternalFeedbackIds": { "$ref": "#/definitions/internalFeedbackIdList" },
+        "unvalidated": { "type": "boolean", "enum": [true] }
+      },
+      "allOf": [
+        {
+          "description": "Every claim has a basis: if no customer Signal IDs, then at least one Internal Feedback ID.",
+          "if": {
+            "properties": { "supportingCustomerSignalIds": { "maxItems": 0 } },
+            "required": ["supportingCustomerSignalIds"]
+          },
+          "then": { "properties": { "supportingInternalFeedbackIds": { "minItems": 1 } } }
+        }
+      ]
+    }
+  }
+}
